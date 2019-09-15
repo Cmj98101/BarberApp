@@ -10,14 +10,13 @@ class LoginScreen extends StatefulWidget {
       this.onSignedInAsAdmin,
       this.onSignedInAsOwner,
       this.onSignUpClient,
-      });
+      this.onSignedInAsEmployee});
   final BaseAuth auth;
   final VoidCallback onSignedInAsUser;
   final VoidCallback onSignedInAsAdmin;
   final VoidCallback onSignedInAsOwner;
   final VoidCallback onSignUpClient;
-  
-
+  final VoidCallback onSignedInAsEmployee;
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -44,9 +43,11 @@ class _LoginScreenState extends State<LoginScreen> {
             await widget.auth.signInWithEmailAndPassword(_email, _password);
         if (account[0] == 'Owner') {
           widget.onSignedInAsOwner();
-        } else if (account[0] == 'BusinessOwner'){
+        } else if (account[0] == 'BusinessOwner') {
           widget.onSignedInAsAdmin();
-        } else if (account[0] == 'Client') {
+        }  else if (account[0] == 'Employee') {
+          widget.onSignedInAsEmployee();
+        }else if (account[0] == 'Client') {
           widget.onSignedInAsUser();
         }
       } catch (error) {
@@ -110,7 +111,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             widget.onSignUpClient();
                           },
                         ),
-                      
                       ],
                     ),
                   ],

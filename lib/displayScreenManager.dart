@@ -24,7 +24,7 @@ enum AuthStatus {
   signedInAsUser,
   signedInAsAdmin,
   signedInAsOwner,
-  signUpClient,
+  signUpClient, signedInAsEmployee
 }
 
 class _DisplayScreenManagerState extends State<DisplayScreenManager> {
@@ -95,6 +95,12 @@ class _DisplayScreenManagerState extends State<DisplayScreenManager> {
       authStatus = AuthStatus.signedInAsOwner;
     });
   }
+    void _signedInAsEmployee() {
+    print('Employee $userData');
+    setState(() {
+      authStatus = AuthStatus.signedInAsEmployee;
+    });
+  }
 
   void _signUpUser() {
     print('signUP: $userData');
@@ -120,7 +126,7 @@ class _DisplayScreenManagerState extends State<DisplayScreenManager> {
           onSignedInAsUser: _signedInAsUser,
           onSignedInAsOwner: _signedInAsOwner,
           onSignedInAsAdmin: _signedInAsAdmin,
-          onSignUpClient: _signUpUser,
+          onSignUpClient: _signUpUser,onSignedInAsEmployee: _signedInAsEmployee,
         );
       case AuthStatus.signedInAsUser:
         // Display User Screen.
@@ -146,6 +152,9 @@ class _DisplayScreenManagerState extends State<DisplayScreenManager> {
           owner: widget.owner,
           onSignOut: _signedOut,
         );
+      case AuthStatus.signedInAsEmployee:
+        // Display Employee Screen
+        
       case AuthStatus.signUpClient:
         // Display Admin Screen.
         return SignupScreen(

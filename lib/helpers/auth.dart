@@ -151,6 +151,10 @@ class Auth implements BaseAuth {
         .collection('Businesses')
         .document('${user?.uid}')
         .get();
+        DocumentSnapshot employeeProfile = await _db
+        .collection('Employees')
+        .document('${user?.uid}')
+        .get();
     var userData = [];
 
     if (ownerProfile.exists) {
@@ -171,7 +175,20 @@ class Auth implements BaseAuth {
         ];
         return userData;
       }
-    } else if (clientProfile.exists) {
+    } else if (employeeProfile.exists) {
+      var isEmployee = employeeProfile['isEmployee'];
+      if (isEmployee == true) {
+        print('Employee Account Logged In: ${user?.uid} works at ${employeeProfile['businessName']}');
+        userData = [
+          'Employee',
+          '${user?.uid}',
+          // TODO: Change codes to public and private code
+          employeeProfile['barberShopCode'],
+          employeeProfile['barberShopPrivateCode']
+        ];
+        return userData;
+      }
+    }else if (clientProfile.exists) {
       print('Client Id: ${user?.uid}');
       userData = [
         'Client',
