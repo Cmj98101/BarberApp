@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+import 'package:flutter_picker/flutter_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 // Helpers
 import '../helpers/auth.dart';
 import '../helpers/globalVariables.dart';
@@ -23,13 +24,15 @@ class EditEmployeeProfileScreen extends StatefulWidget {
       _EditEmployeeProfileScreenState();
 }
 
+enum TimeType { open, close }
+
 class _EditEmployeeProfileScreenState extends State<EditEmployeeProfileScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   static final formKey = GlobalKey<FormState>();
 
   String _firstName;
   String _lastName;
-  String stateText;
+
   bool mondayActive = false;
   TextEditingController _firstNameTFController = TextEditingController();
   TextEditingController _lastNameTFController = TextEditingController();
@@ -132,104 +135,288 @@ class _EditEmployeeProfileScreenState extends State<EditEmployeeProfileScreen> {
                           value.isEmpty ? 'Last name can\'t be Emtpy' : null,
                       onSaved: (value) => _lastName = value,
                     ),
-                    Container(
-                        height: 300,
-                        color: Colors.yellow,
-                        child: StreamBuilder<QuerySnapshot>(
-                            stream: Firestore.instance
-                                .collection(
-                                    '/Owner/$ownerId/Businesses/${widget.businessId}/Employees/${widget.employeeId}/Availability/')
-                                .snapshots(),
-                            builder: (BuildContext context,
-                                AsyncSnapshot<QuerySnapshot> snapshot) {
-                              switch (snapshot.connectionState) {
-                                case ConnectionState.waiting:
-                                  return new Center(
-                                      child: new CircularProgressIndicator());
-                                default:
-                                  return ListView(
-                                      children: snapshot.data.documents
-                                          .map((document) {
-                                    return Column(
-                                      children: <Widget>[
-                                        Card(
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: <Widget>[
-                                              Container(
-                                                  color: Colors.green,
-                                                  padding: EdgeInsets.only(
-                                                      left: 15,
-                                                      top: 15,
-                                                      bottom: 15),
-                                                  child: Row(
-                                                    children: <Widget>[
-                                                      Text('Monday'),
-                                                      Padding(
+                    Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: 30.0,
+                          ),
+                        ),
+                        Container(
+                          child: Text('Day Availibility'),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: 30.0,
+                          ),
+                        ),
+                        Container(
+                            height: 320,
+                            child: StreamBuilder<QuerySnapshot>(
+                                stream: Firestore.instance
+                                    .collection(
+                                        '/Owner/$ownerId/Businesses/${widget.businessId}/Employees/${widget.employeeId}/Availability/')
+                                    .orderBy('order', descending: false)
+                                    .snapshots(),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                                  switch (snapshot.connectionState) {
+                                    case ConnectionState.waiting:
+                                      return new Center(
+                                          child:
+                                              new CircularProgressIndicator());
+                                    default:
+                                      return Column(
+                                          children: snapshot.data.documents
+                                              .map((document) {
+                                        var startTime;
+                                        var formatStartTime;
+
+                                        var endTime;
+                                        var formatEndTime;
+                                        try {
+                                          startTime =
+                                              (document['start'] as Timestamp)
+                                                  .toDate();
+                                          formatStartTime = DateFormat('h:mm a')
+                                              .format(startTime);
+                                        } catch (error) {
+                                          startTime = null;
+                                        }
+                                        try {
+                                          endTime =
+                                              (document['end'] as Timestamp)
+                                                  .toDate();
+                                          formatEndTime = DateFormat('h:mm a')
+                                              .format(endTime);
+                                        } catch (error) {
+                                          endTime = null;
+                                        }
+
+                                        return Column(
+                                          children: <Widget>[
+                                            Container(
+                                              height: 45,
+                                              child: Card(
+                                                elevation: 6,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: <Widget>[
+                                                    Container(
+                                                        // color: Colors.green,
                                                         padding:
                                                             EdgeInsets.only(
-                                                                left: 20),
+                                                                left: 7,
+                                                                top: 7,
+                                                                bottom: 7),
+                                                        child: Row(
+                                                          children: <Widget>[
+                                                            Switch(
+                                                              onChanged:
+                                                                  (value) {
+                                                                Map<String,
+                                                                        Object>
+                                                                    data = {
+                                                                  'isAvailable':
+                                                                      value,
+                                                                };
+
+                                                                try {
+                                                                  Firestore
+                                                                      .instance
+                                                                      .document(
+                                                                          '/Owner/$ownerId/Businesses/${widget.businessId}/Employees/${widget.employeeId}/Availability/${document.documentID}')
+                                                                      .updateData(
+                                                                          data);
+                                                                } catch (error) {
+                                                                  print(
+                                                                      'ERROR updating ISAVAILABLE: $error');
+                                                                }
+                                                              },
+                                                              value: document[
+                                                                  'isAvailable'],
+                                                            ),
+                                                            Padding(
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                      left: 15),
+                                                            ),
+                                                            Text(document[
+                                                                'dayOfWeek']),
+                                                          ],
+                                                        )),
+                                                    Container(
+                                                      child: Visibility(
+                                                        visible: document[
+                                                                    'isAvailable'] ==
+                                                                false
+                                                            ? false
+                                                            : true,
+                                                        child: Row(
+                                                          children: <Widget>[
+                                                            FlatButton(
+                                                              child: Text(
+                                                                  startTime ==
+                                                                          null
+                                                                      ? 'Open'
+                                                                      : '$formatStartTime'),
+                                                              onPressed: () {
+                                                                bottom(
+                                                                    document
+                                                                        .documentID,
+                                                                    TimeType
+                                                                        .open,
+                                                                    document[
+                                                                        'dayOfWeek'],
+                                                                    startTime);
+                                                              },
+                                                            ),
+                                                            Text('-'),
+                                                            FlatButton(
+                                                              child: Text(endTime ==
+                                                                      null
+                                                                  ? 'Close'
+                                                                  : '$formatEndTime'),
+                                                              onPressed: () {
+                                                                bottom(
+                                                                    document
+                                                                        .documentID,
+                                                                    TimeType
+                                                                        .close,
+                                                                    document[
+                                                                        'dayOfWeek'],
+                                                                    endTime);
+                                                                // TODO: add a way to not accept times that extend past the day
+                                                              },
+                                                            )
+                                                          ],
+                                                        ),
                                                       ),
-                                                      Switch(
-                                                        onChanged: (value) {
-                                                          Map<String, Object>
-                                                              data = {
-                                                            'isAvailable': value
-                                                          };
-                                                          
-                                                            try {
-                                                              Firestore.instance
-                                                                  .document(
-                                                                      '/Owner/$ownerId/Businesses/${widget.businessId}/Employees/${widget.employeeId}/Availability/${document.documentID}')
-                                                                  .updateData(
-                                                                      data);
-                                                            } catch (error) {
-                                                              print(
-                                                                  'ERROR updating ISAVAILABLE: $error');
-                                                            }
-                                                            
-                                                          
-                                                        },
-                                                        value: document['isAvailable'],
-                                                      )
-                                                    ],
-                                                  )),
-                                              Container(
-                                                color: Colors.red,
-                                                child: Row(
-                                                  children: <Widget>[
-                                                    FlatButton(
-                                                      child: Text('time'),
-                                                      onPressed: () {},
-                                                    ),
-                                                    Text('-'),
-                                                    FlatButton(
-                                                      child: Text('time'),
-                                                      onPressed: () {},
                                                     )
                                                   ],
                                                 ),
+                                              ),
+                                            )
+                                          ],
+                                        );
+                                      }).toList());
+                                  }
+                                })),
+                      ],
+                    ),
+                    Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: EdgeInsets.only(top: 40.0),
+                        ),
+                        Container(
+                          child: Text('Break Hours'),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(top: 40.0),
+                        ),
+                        Container(
+                            // height: 220,
+                            child: StreamBuilder<QuerySnapshot>(
+                                stream: Firestore.instance
+                                    .collection(
+                                        '/Owner/$ownerId/Businesses/${widget.businessId}/Employees/${widget.employeeId}/Availability/')
+                                    // .where('isAvailable', isEqualTo: true)
+                                    .orderBy('order', descending: false)
+                                    .snapshots(),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                                  switch (snapshot.connectionState) {
+                                    case ConnectionState.waiting:
+                                      return new Center(
+                                          child:
+                                              new CircularProgressIndicator());
+                                    default:
+                                      return Column(
+                                          children: snapshot.data.documents.map(
+                                        (document) {
+                                          return Column(
+                                            children: <Widget>[
+                                              Visibility(
+                                                visible:
+                                                    document['isAvailable'] ==
+                                                            false
+                                                        ? false
+                                                        : true,
+                                                child: Container(
+                                                  height: 45,
+                                                  child: Card(
+                                                    elevation: 6,
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: <Widget>[
+                                                        Container(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    left: 25,
+                                                                    top: 7,
+                                                                    bottom: 7),
+                                                            child: Row(
+                                                              children: <
+                                                                  Widget>[
+                                                                Text(document[
+                                                                    'dayOfWeek']),
+                                                                Padding(
+                                                                  padding: EdgeInsets
+                                                                      .only(
+                                                                          left:
+                                                                              20),
+                                                                ),
+                                                              ],
+                                                            )),
+                                                        Container(
+                                                          child: Row(
+                                                            children: <Widget>[
+                                                              FlatButton(
+                                                                child: Text(
+                                                                    'open'),
+                                                                onPressed:
+                                                                    () {},
+                                                              ),
+                                                              Text('-'),
+                                                              FlatButton(
+                                                                child: Text(
+                                                                    'close'),
+                                                                onPressed:
+                                                                    () {},
+                                                              )
+                                                            ],
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
                                               )
                                             ],
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList());
-                              }
-                            })),
+                                          );
+                                        },
+                                      ).toList());
+                                  }
+                                })),
+                      ],
+                    ),
                     Padding(
                       padding: EdgeInsets.only(bottom: 40.0),
                     ),
-                    RaisedButton(
-                        child: Text(
-                          'Time Available',
-                          style: TextStyle(fontSize: 20.0),
-                        ),
-                        onPressed: () {
-                          // showTimePicker(context);
-                        }),
+                    // RaisedButton(
+                    //   child: Text(
+                    //     'Time Available',
+                    //     style: TextStyle(fontSize: 20.0),
+                    //   ),
+                    //   onPressed: () {
+                    //     // showTimePicker(context);
+                    //   },
+                    // ),
                     RaisedButton(
                         child: Text(
                           'Save Employee',
@@ -246,13 +433,119 @@ class _EditEmployeeProfileScreenState extends State<EditEmployeeProfileScreen> {
     );
   }
 
-  void bottom() {
+  List weekDays = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
+  int getWeekDay(String weekDay) {
+    for (var i = 0; i < weekDays.length; i++) {
+      if (weekDay == weekDays[i]) {
+        print('WeekDay : ${i + 1}');
+        return i + 1;
+      }
+    }
+    return null;
+  }
+
+  DateTime setTime(int currentWeekDay, int selectedWeekDay, String time) {
+    int difference;
+//TODO: BUG when user changes day on Sunday ex: currentdayofweek is sunday changed day of the  week is monday but it will subtract to the past monday!
+    var format;
+    if (currentWeekDay == selectedWeekDay) {
+      difference = 0;
+      format = DateFormat('yyyy-MM-dd HH:mm:ss').parse(
+          '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day + difference} $time');
+    } else if (currentWeekDay < selectedWeekDay) {
+      print('current weekday is less');
+      difference = selectedWeekDay - currentWeekDay;
+      format = DateFormat('yyyy-MM-dd HH:mm:ss').parse(
+          '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day + difference} $time');
+    } else {
+      print('current weekday is greater');
+      difference = currentWeekDay - selectedWeekDay;
+      format = DateFormat('yyyy-MM-dd HH:mm:ss').parse(
+          '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day - difference} $time');
+    }
+    print('$format');
+
+    return format;
+  }
+
+  TimeType timeType;
+  void bottom(
+      String documentId, TimeType type, String weekDay, DateTime startTime) {
+    Picker ps = new Picker(
+        hideHeader: true,
+        adapter: new DateTimePickerAdapter(
+            type: PickerDateTimeType.kHM_AP, value: startTime),
+        onConfirm: (Picker picker, List value) {
+          // print((picker.adapter as DateTimePickerAdapter).value);
+          DateTime now = DateTime.parse(
+                  "${(picker.adapter as DateTimePickerAdapter).value}")
+              .toLocal();
+          print('$now');
+          // var addedTime = now.add(Duration(minutes: 15 * i));
+          String formatedTime = DateFormat('HH:mm:ss').format(now);
+          timeType = type;
+          int currentWeekDay = DateTime.now().weekday;
+          int selectedWeekDay = getWeekDay(weekDay);
+
+          Map<String, Object> data;
+          var dayOfTheWeek = Firestore.instance.document(
+              '/Owner/$ownerId/Businesses/${widget.businessId}/Employees/${widget.employeeId}/Availability/$documentId');
+          switch (timeType) {
+            case TimeType.open:
+              var time = setTime(currentWeekDay, selectedWeekDay, formatedTime);
+              data = {'start': time};
+              dayOfTheWeek.updateData(data);
+
+              break;
+            case TimeType.close:
+              var time = setTime(currentWeekDay, selectedWeekDay, formatedTime);
+
+              data = {'end': time};
+              dayOfTheWeek.updateData(data);
+
+              break;
+          }
+
+          // timeAvailable.add('$time');
+          // print(time);
+        });
+
     showModalBottomSheet(
         context: context,
         builder: (builder) {
           return Container(
-            child: Center(
-              child: Text('Hello'),
+            color: Colors.white,
+            height: 250,
+            child: Column(
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    FlatButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: new Text(
+                            PickerLocalizations.of(context).cancelText)),
+                    FlatButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ps.onConfirm(ps, ps.selecteds);
+                        },
+                        child: new Text(
+                            PickerLocalizations.of(context).confirmText))
+                  ],
+                ),
+                ps.makePicker(),
+              ],
             ),
           );
         });

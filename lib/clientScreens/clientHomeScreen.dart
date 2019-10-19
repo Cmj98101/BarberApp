@@ -2,6 +2,7 @@ import 'package:barber_app/clientScreens/clientProfileScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'clientCheckInScreen.dart';
+import 'clientScheduleScreen.dart';
 // Helpers
 import 'package:barber_app/helpers/auth.dart';
 import '../helpers/globalVariables.dart';
@@ -154,7 +155,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                                         children: <Widget>[
                                                           Text(
                                                             '${document['firstName']}, ${document['lastName'][0]}.',
-                                                            style: TextStyle(color: Colors.grey[600],
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .grey[600],
                                                                 fontSize: 20.0,
                                                                 fontWeight:
                                                                     FontWeight
@@ -167,7 +170,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                                           ),
                                                           Text(
                                                             'EST ${document['availableIn']}m',
-                                                            style: TextStyle(color: Colors.black,
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .black,
                                                                 fontSize: 16.0,
                                                                 fontWeight:
                                                                     FontWeight
@@ -194,7 +199,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w500)),
-                                                        onPressed: () {},
+                                                        onPressed: () {
+                                                          Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (BuildContext context) =>
+                                                                          ClientScheduleScreen(businessId: widget.businessId, employeeId: document.documentID, auth: widget.auth,)));
+                                                        },
                                                       ),
                                                     ),
                                                   ],

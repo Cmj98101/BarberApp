@@ -12,8 +12,10 @@ abstract class BaseAuth {
   Future<void> signOut();
   Future<void> addEmployee(
       String firstName, String lastName, String businessId);
-  Future<void> editEmployee(String businessId, String employeeId, String firstName, String lastName);
+  Future<void> editEmployee(
+      String businessId, String employeeId, String firstName, String lastName);
   Future<void> deleteEmployee(String businessId, String employeeId);
+  Future<List> getAvailibilityTimes(String businessId, String employeeId, String dayOfTheWeek);
 }
 
 // Maybe implement a key/value pair system to retrieve data (MAP)r
@@ -151,10 +153,8 @@ class Auth implements BaseAuth {
         .collection('Businesses')
         .document('${user?.uid}')
         .get();
-        DocumentSnapshot employeeProfile = await _db
-        .collection('Employees')
-        .document('${user?.uid}')
-        .get();
+    DocumentSnapshot employeeProfile =
+        await _db.collection('Employees').document('${user?.uid}').get();
     var userData = [];
 
     if (ownerProfile.exists) {
@@ -178,7 +178,8 @@ class Auth implements BaseAuth {
     } else if (employeeProfile.exists) {
       var isEmployee = employeeProfile['isEmployee'];
       if (isEmployee == true) {
-        print('Employee Account Logged In: ${user?.uid} works at ${employeeProfile['businessName']}');
+        print(
+            'Employee Account Logged In: ${user?.uid} works at ${employeeProfile['businessName']}');
         userData = [
           'Employee',
           '${user?.uid}',
@@ -188,7 +189,7 @@ class Auth implements BaseAuth {
         ];
         return userData;
       }
-    }else if (clientProfile.exists) {
+    } else if (clientProfile.exists) {
       print('Client Id: ${user?.uid}');
       userData = [
         'Client',
@@ -229,13 +230,13 @@ class Auth implements BaseAuth {
     }
   }
 
-  Future<void> editEmployee(String businessId, String employeeId, String firstName, String lastName) async {
+  Future<void> editEmployee(String businessId, String employeeId,
+      String firstName, String lastName) async {
     var employeeToEdit =
         _db.collection('/Owner/$ownerId/Businesses/$businessId/Employees');
-        Map<String, Object> editedEmployeeData = {
+    Map<String, Object> editedEmployeeData = {
       'firstName': firstName,
       'lastName': lastName,
-      
     };
     try {
       employeeToEdit.document('$employeeId').updateData(editedEmployeeData);
@@ -243,6 +244,7 @@ class Auth implements BaseAuth {
       print('ERROR editing employee: $error');
     }
   }
+
   Future<void> deleteEmployee(String businessId, String employeeId) async {
     var employeeToDelete =
         _db.collection('/Owner/$ownerId/Businesses/$businessId/Employees');
@@ -251,5 +253,15 @@ class Auth implements BaseAuth {
     } catch (error) {
       print('ERROR deleting employee: $error');
     }
+  }
+
+  Future<List> getAvailibilityTimes(String businessId, String employeeId, String dayOfTheWeek) async {
+    DocumentSnapshot employee = await _db
+        .document(
+            '/Owner/$ownerId/Businesses/$businessId/Employees/$employeeId/Availability/$dayOfTheWeek')
+        .get();
+
+    List employeeData = [employee['start'], employee['end'], employee['isAvailable'], employee['dayOfWeek']];
+    return employeeData;
   }
 }
