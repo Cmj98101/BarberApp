@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'adminEmployeesScreen.dart';
-import 'package:intl/intl.dart';
+import 'adminSettingsScreen.dart';
+
+
 // Helpers
 import 'package:barber_app/helpers/auth.dart';
 import '../helpers/globalVariables.dart';
@@ -53,6 +55,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
       print('Error Signing Out: $error');
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -184,18 +187,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                           textAlign: TextAlign.center,
                         ),
                         onTap: () {
-                          timeAvailable.clear();
-                          for (var i = 0; i < 4; i++) {
-                            DateTime now = DateTime.parse("2018-08-16 22:00:00").toLocal();
-                            
-                            
-                            var addedTime = now.add(Duration(minutes: 15 * i));
-                            var time = DateFormat('h:mm:ss a').format(addedTime);
-                            timeAvailable.add('$time');
-                            
-                          }
-                          print(timeAvailable);
-
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => AdminSettingsScreen()));
                           
                         },
                       ),

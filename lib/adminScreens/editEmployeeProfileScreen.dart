@@ -24,7 +24,7 @@ class EditEmployeeProfileScreen extends StatefulWidget {
       _EditEmployeeProfileScreenState();
 }
 
-enum TimeType { open, close }
+enum TimeType { open, close, breakStart, breakEnd }
 
 class _EditEmployeeProfileScreenState extends State<EditEmployeeProfileScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -337,6 +337,30 @@ class _EditEmployeeProfileScreenState extends State<EditEmployeeProfileScreen> {
                                       return Column(
                                           children: snapshot.data.documents.map(
                                         (document) {
+                                          var startTime;
+                                          var formatStartTime;
+
+                                          var endTime;
+                                          var formatEndTime;
+                                          try {
+                                            startTime =
+                                                (document['breakStart'] as Timestamp)
+                                                    .toDate();
+                                            formatStartTime =
+                                                DateFormat('h:mm a')
+                                                    .format(startTime);
+                                          } catch (error) {
+                                            startTime = null;
+                                          }
+                                          try {
+                                            endTime =
+                                                (document['breakEnd'] as Timestamp)
+                                                    .toDate();
+                                            formatEndTime = DateFormat('h:mm a')
+                                                .format(endTime);
+                                          } catch (error) {
+                                            endTime = null;
+                                          }
                                           return Column(
                                             children: <Widget>[
                                               Visibility(
@@ -378,16 +402,39 @@ class _EditEmployeeProfileScreenState extends State<EditEmployeeProfileScreen> {
                                                             children: <Widget>[
                                                               FlatButton(
                                                                 child: Text(
-                                                                    'open'),
-                                                                onPressed:
-                                                                    () {},
+                                                                  startTime ==
+                                                                          null
+                                                                      ? 'Open'
+                                                                      : '$formatStartTime'),
+                                                                onPressed: () {
+                                                                  bottom(
+                                                                    document
+                                                                        .documentID,
+                                                                    TimeType
+                                                                        .breakStart,
+                                                                    document[
+                                                                        'dayOfWeek'],
+                                                                    startTime);
+                                                                  
+                                                                },
                                                               ),
                                                               Text('-'),
                                                               FlatButton(
-                                                                child: Text(
-                                                                    'close'),
+                                                                child: Text(endTime ==
+                                                                      null
+                                                                  ? 'Close'
+                                                                  : '$formatEndTime'),
                                                                 onPressed:
-                                                                    () {},
+                                                                    () {
+                                                                      bottom(
+                                                                      document
+                                                                          .documentID,
+                                                                      TimeType
+                                                                          .breakEnd,
+                                                                      document[
+                                                                          'dayOfWeek'],
+                                                                      endTime);
+                                                                    },
                                                               )
                                                             ],
                                                           ),
@@ -509,6 +556,20 @@ class _EditEmployeeProfileScreenState extends State<EditEmployeeProfileScreen> {
               var time = setTime(currentWeekDay, selectedWeekDay, formatedTime);
 
               data = {'end': time};
+              dayOfTheWeek.updateData(data);
+
+              break;
+            case TimeType.breakStart:
+              var time = setTime(currentWeekDay, selectedWeekDay, formatedTime);
+
+              data = {'breakStart': time};
+              dayOfTheWeek.updateData(data);
+
+              break;
+            case TimeType.breakEnd:
+              var time = setTime(currentWeekDay, selectedWeekDay, formatedTime);
+
+              data = {'breakEnd': time};
               dayOfTheWeek.updateData(data);
 
               break;

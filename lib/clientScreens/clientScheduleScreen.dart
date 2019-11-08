@@ -16,6 +16,7 @@ class ClientScheduleScreen extends StatefulWidget {
 }
 
 enum DataState { loading, complete }
+enum PaymentPlace { inShopPayment, mobilePayment }
 
 class _ClientScheduleScreenState extends State<ClientScheduleScreen> {
   void _handleNewDate(date) {
@@ -44,6 +45,12 @@ class _ClientScheduleScreenState extends State<ClientScheduleScreen> {
     //   {'name': 'Event B', 'isDone': true},
     // ],
   };
+  final List _services = [
+    {'serviceName': 'Gent\'s Cut', 'time': 45, 'isSelected': false},
+    {'serviceName': 'Gent\'s Shave', 'time': 30, 'isSelected': false},
+    {'serviceName': 'Senior Gent\'s Cut', 'time': 45, 'isSelected': false},
+    {'serviceName': 'Gent\'s Cut & Shave', 'time': 1, 'isSelected': false}
+  ];
   List daysOfTheWeek = [
     'Monday',
     'Tuesday',
@@ -311,39 +318,156 @@ class _ClientScheduleScreenState extends State<ClientScheduleScreen> {
     _selectedEvents = _events[_selectedDay] ?? [];
   }
 
+  void scheduleAppointment() {}
+  PaymentPlace paymentPlace = PaymentPlace.inShopPayment;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Scheduling with'),
       ),
-      body: ListView(
-        children: <Widget>[
-          Container(
-            child: Column(children: <Widget>[],),
-          ),
-          Container(
-            child: dataState == DataState.loading
-                ? Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : Calendar(
-                    events: _events,
-                    onRangeSelected: (range) =>
-                        print("Range is ${range.from}, ${range.to}"),
-                    onDateSelected: (date) => _handleNewDate(date),
-                    isExpandable: false,
-                    showTodayIcon: true,
-                    eventDoneColor: Colors.transparent,
-                    eventColor: Colors.transparent),
-          ),
-          _buildEventList()
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+            border: Border(top: BorderSide(width: .4, color: Colors.black))),
+        height: 95,
+        // color: Colors.red,
+        child: Row(
+          children: <Widget>[
+            Container(
+              child: Text('\$50',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              margin: EdgeInsets.only(left: 30.0),
+            ),
+            Container(
+                margin: EdgeInsets.only(right: 30.0),
+                child: RaisedButton(color: Colors.green[900],elevation: 4,
+                  onPressed: () {
+                    scheduleAppointment();
+                  },
+                  child: Text('Book', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w800,letterSpacing: 1.5)),
+                ))
+          ],
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ),
+      ),
+      body: Container(
+        // color: Colors.blue,
+        padding: EdgeInsets.only(top: 12.0, bottom: 0, left: 20.0, right: 20.0),
+        // color: Colors.red,
+        child: ListView(
+          children: <Widget>[
+            Text(
+              'Select a Service',
+              style: TextStyle(fontSize: 18),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: 14.0),
+            ),
+            _buildServiceList(),
+            Text('Select a Date & Time', style: TextStyle(fontSize: 18)),
+            Padding(
+              padding: EdgeInsets.only(top: 14.0),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: 14.0),
+            ),
+            Container(
+              child: dataState == DataState.loading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : Calendar(
+                      events: _events,
+                      onRangeSelected: (range) =>
+                          print("Range is ${range.from}, ${range.to}"),
+                      onDateSelected: (date) => _handleNewDate(date),
+                      isExpandable: false,
+                      showTodayIcon: true,
+                      eventDoneColor: Colors.transparent,
+                      eventColor: Colors.transparent),
+            ),
+            _buildEventList(),
+            Text('Payment', style: TextStyle(fontSize: 18)),
+            Padding(
+              padding: EdgeInsets.only(top: 14.0),
+            ),
+            Container(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Container(
+                      child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        paymentPlace = PaymentPlace.mobilePayment;
+                      });
+                    },
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.check_circle,
+                          color: paymentPlace == PaymentPlace.mobilePayment
+                              ? Colors.green
+                              : Colors.black,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(left: 10.0),
+                        ),
+                        Text('Mobile Payment', style: TextStyle(fontSize: 16))
+                      ],
+                    ),
+                  )),
+                  Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                  ),
+                  Container(
+                      child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        paymentPlace = PaymentPlace.inShopPayment;
+                      });
+                    },
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.check_circle,
+                          color: paymentPlace == PaymentPlace.inShopPayment
+                              ? Colors.green
+                              : Colors.black,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(left: 10.0),
+                        ),
+                        Text('In Shop', style: TextStyle(fontSize: 16))
+                      ],
+                    ),
+                  ))
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void timeSelected(int index) {
+  void _serviceSelected(int index) {
+    for (var service in _services) {
+      service['isSelected'] = false;
+    }
+    if (_services[index]['isSelected'] == false) {
+      setState(() {
+        _services[index]['isSelected'] = true;
+      });
+      print(_services[index]['serviceName']);
+    } else {
+      setState(() {
+        _services[index]['isSelected'] = false;
+      });
+    }
+  }
+
+  void _timeSelected(int index) {
     var formattedTime;
     print(index);
     formattedTime = DateFormat('yyyy-MM-dd HH:mm:ss').parse(
@@ -357,6 +481,44 @@ class _ClientScheduleScreenState extends State<ClientScheduleScreen> {
     });
 
     print('isSelectedtime: ${_selectedEvents[index]}  $formattedTime');
+  }
+
+  Widget _buildServiceList() {
+    return Container(
+        height: 300,
+        child: ListView.builder(
+          scrollDirection: Axis.vertical,
+          itemBuilder: (BuildContext context, int index) => Container(
+            child: Column(
+              children: <Widget>[
+                Container(
+                  height: 70,
+                  child: Card(
+                    child: ListTile(
+                      title: Text('${_services[index]['serviceName']}'),
+
+                      leading: Icon(
+                        Icons.check_circle,
+                        color: _services[index]['isSelected'] == true
+                            ? Colors.green
+                            : null,
+                      ),
+                      trailing: Text(
+                        '${_services[index]['time']} min.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      onTap: () {
+                        _serviceSelected(index);
+                      },
+                      // selected: _services[index]['isSelected'],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          itemCount: _services.length,
+        ));
   }
 
   Widget _buildEventList() {
@@ -388,10 +550,10 @@ class _ClientScheduleScreenState extends State<ClientScheduleScreen> {
                       animationDuration: Duration(milliseconds: 1),
                       child: Text(_selectedEvents[index]['time'].toString()),
                       onPressed: () {
-                        timeSelected(index);
+                        _timeSelected(index);
                       },
                       shape: RoundedRectangleBorder(
-                          side: BorderSide(color: Colors.yellow[800], width: 2),
+                          side: BorderSide(color: Colors.black, width: 2),
                           borderRadius: new BorderRadius.circular(30.0)),
                     ),
                     Padding(
